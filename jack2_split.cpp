@@ -15,6 +15,7 @@ std::vector<jack_port_t*> out_ports;
 std::vector<std::vector<float>> in_buffers;
 std::vector<std::vector<float>> out_buffers;
 
+// TODO: check semantics of std::atomic to see if it really gives us what we need here...
 std::atomic<jack_nframes_t> frame_time1;
 std::atomic<jack_nframes_t> frame_time2;
 
@@ -68,6 +69,7 @@ int main(int argc, char *argv[]) {
   jack_input_client = jack_client_open("jack2_split_in", JackNullOption, &jack_status);
   jack_output_client = jack_client_open("jack2_split_out", JackNullOption, &jack_status);
 
+  // TODO: error checking and reporting
   if (!(jack_input_client && jack_output_client)) {
     std::cout << "Failed to open at least one client. Exiting...\n";
     return EXIT_FAILURE;
@@ -84,6 +86,7 @@ int main(int argc, char *argv[]) {
     std::stringstream in_name_stream;
     in_name_stream << "input" << index;
 
+    // TODO: error checking and reporting
     in_ports[index] = jack_port_register(jack_input_client, in_name_stream.str().c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsTerminal, 0);
     out_ports[index] = jack_port_register(jack_output_client, out_name_stream.str().c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput | JackPortIsTerminal, 0);
 
@@ -97,6 +100,7 @@ int main(int argc, char *argv[]) {
   jack_activate(jack_input_client);
   jack_activate(jack_output_client);
  
+  // TODO: signal handling and clean exit
   while(true) {
     sleep(1);
   }
