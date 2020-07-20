@@ -20,6 +20,12 @@ std::atomic<jack_nframes_t> frame_time2;
 
 size_t number_of_channels = 2;
 
+void copy_buffers(jack_nframes_t nframes) {
+  for (size_t index = 0; index < number_of_channels; ++index) {
+    memcpy(&(out_buffers[index][0]), &(in_buffers[index][0]), nframes*(sizeof(float)));
+  }
+}
+
 extern "C" {
   int process_input(jack_nframes_t nframes, void *arg) {
     for (size_t index = 0; index < number_of_channels; ++index) {
@@ -30,6 +36,7 @@ extern "C" {
 
     if (frame_time1 == frame_time2) {
       // std::cout << "in: " << last_frame_time << "\n";
+      copy_buffers(nframes);
     }
 
     return 0;
@@ -44,6 +51,7 @@ extern "C" {
 
     if (frame_time1 == frame_time2) {
       // std::cout << "out: " << last_frame_time << "\n";
+      copy_buffers(nframes);
     }
 
     return 0;
