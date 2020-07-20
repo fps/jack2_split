@@ -77,13 +77,16 @@ int main(int argc, char *argv[]) {
   out_ports.resize(number_of_channels);
   in_buffers.resize(number_of_channels);
   out_buffers.resize(number_of_channels);
+
   for (size_t index = 0; index < number_of_channels; ++index) {
     std::stringstream out_name_stream;
     out_name_stream << "output" << index;
     std::stringstream in_name_stream;
     in_name_stream << "input" << index;
+
     in_ports[index] = jack_port_register(jack_input_client, in_name_stream.str().c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsTerminal, 0);
     out_ports[index] = jack_port_register(jack_output_client, out_name_stream.str().c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput | JackPortIsTerminal, 0);
+
     in_buffers[index].resize(jack_get_buffer_size(jack_input_client));
     out_buffers[index].resize(jack_get_buffer_size(jack_input_client));
   }
@@ -97,7 +100,6 @@ int main(int argc, char *argv[]) {
   while(true) {
     sleep(1);
   }
-
   
   return EXIT_SUCCESS;
 }
