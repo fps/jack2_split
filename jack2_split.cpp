@@ -28,6 +28,16 @@ void copy_buffers(jack_nframes_t nframes) {
 }
 
 extern "C" {
+  int buffer_size_callback(jack_nframes_t nframes, void *arg) {
+    std::cout << "buffer_size_callback: " << nframes << "\n";
+    for (size_t index = 0; index < number_of_channels; ++index) {
+      in_buffers[index].resize(nframes);
+      out_buffers[index].resize(nframes);
+    }
+
+    return 0;
+  }
+
   int process_input(jack_nframes_t nframes, void *arg) {
     for (size_t index = 0; index < number_of_channels; ++index) {
       memcpy(&(in_buffers[index][0]), jack_port_get_buffer(in_ports[index], nframes), nframes*(sizeof(float)));
@@ -59,7 +69,6 @@ extern "C" {
   }
 }
 
-// TODO: implement buffer size callback
 int main(int argc, char *argv[]) {
   frame_time1 = 0;
   frame_time2 = 0;
@@ -89,13 +98,12 @@ int main(int argc, char *argv[]) {
     // TODO: error checking and reporting
     in_ports[index] = jack_port_register(jack_input_client, in_name_stream.str().c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsTerminal, 0);
     out_ports[index] = jack_port_register(jack_output_client, out_name_stream.str().c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput | JackPortIsTerminal, 0);
-
-    in_buffers[index].resize(jack_get_buffer_size(jack_input_client));
-    out_buffers[index].resize(jack_get_buffer_size(jack_input_client));
   }
 
   jack_set_process_callback(jack_input_client, process_input, 0);
   jack_set_process_callback(jack_output_client, process_output, 0);
+
+  jack_set_buffer_size_callback(jack_input_client, buffer_size_callback, 0);
 
   jack_activate(jack_input_client);
   jack_activate(jack_output_client);
