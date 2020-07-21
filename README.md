@@ -1,6 +1,6 @@
 # jack2_split
 
-A program that facilitates parallelism in serial jack (jack2/jackdmp - this does not help in jack1 setups) graphs by introducing latency
+A program that facilitates parallelism in serial jack graphs by introducing latency. Only useful for jack2/jackdmp - it does nothing but add latency in jack1 setups.
 
 # What?
 
