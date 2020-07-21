@@ -42,6 +42,7 @@ extern "C" {
     for (size_t index = 0; index < number_of_channels; ++index) {
       memcpy(&(in_buffers[index][0]), jack_port_get_buffer(in_ports[index], nframes), nframes*(sizeof(float)));
     }
+
     jack_nframes_t last_frame_time = jack_last_frame_time(jack_input_client);
     frame_time1 = last_frame_time;
 
@@ -57,6 +58,7 @@ extern "C" {
     for (size_t index = 0; index < number_of_channels; ++index) {
       memcpy(jack_port_get_buffer(out_ports[index], nframes), &(out_buffers[index][0]), nframes*(sizeof(float)));
     }
+
     jack_nframes_t last_frame_time = jack_last_frame_time(jack_input_client);
     frame_time2 = last_frame_time;
 
