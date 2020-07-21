@@ -20,4 +20,4 @@ Running A and B serially might produce xruns (i.e. violate the scheduling deadli
 capture -> A -> jack2_split -> B playback
 </pre>
 
-<code>jack2_split</code> breaks the serial dependency by registering two jack clients which respectively only have terminal input and output ports. It copies the buffer from its inputs to its outputs _after_ the current process cycle. This introduces one additional period of latency into the graph, but allows jack2/jackdmp to schedule A and B in parallel (e.g. on two cores).
+<code>jack2_split</code> breaks the serial dependency by registering two jack clients which respectively only have terminal input and output ports. It copies the buffers from its inputs to its outputs _after_ the current process cycle. This introduces one additional period of latency into the graph, but allows jack2/jackdmp to schedule A and B in parallel (e.g. on two cores).
