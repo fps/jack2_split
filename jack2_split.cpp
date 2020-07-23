@@ -30,8 +30,8 @@ void copy_buffers(jack_nframes_t nframes) {
   auto pt = previous_frame_time.load(std::memory_order_acquire);
 
   if (t1 == t2) {
-    if ((0 != pt) && ((t1 - pt) != nframes)) {
-      std::cout << "oy - missed a buffer!\n";
+    if ((t1 != pt) && (0 != pt) && ((t1 - pt) != nframes)) {
+      std::cout << "oy - missed a buffer! (t1 - pt): " << (t1 - pt) << "\n";
     }
     for (size_t index = 0; index < number_of_channels; ++index) {
       memcpy(&(out_buffers[index][0]), &(in_buffers[index][0]), nframes*(sizeof(float)));
