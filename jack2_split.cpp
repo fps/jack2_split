@@ -21,6 +21,9 @@ std::atomic<jack_nframes_t> frame_time2;
 
 std::atomic<jack_nframes_t> previous_frame_time;
 
+jack_nframes_t previous_frame_time1;
+jack_nframes_t previous_frame_time2;
+
 size_t number_of_channels = 2;
 
 void copy_buffers(jack_nframes_t nframes) {
@@ -62,6 +65,10 @@ extern "C" {
 
     copy_buffers(nframes);
 
+    if (previous_frame_time1 != 0 && last_frame_time - previous_frame_time1 != nframes) {
+      std::cout << "ay1 - missed a buffer\n";
+    } 
+    previous_frame_time1 = last_frame_time;
     return 0;
   }
 
@@ -75,6 +82,10 @@ extern "C" {
 
     copy_buffers(nframes);
 
+    if (previous_frame_time2 != 0 && last_frame_time - previous_frame_time2 != nframes) {
+      std::cout << "ay2 - missed a buffer\n";
+    } 
+    previous_frame_time2 = last_frame_time;
     return 0;
   }
 }
