@@ -1,5 +1,7 @@
 #include <boost/program_options.hpp>
 #include <jack/jack.h>
+#include <jack/control.h>
+#include <stdbool.h>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -12,6 +14,7 @@ jack_client_t *jack_output_client;
 
 std::vector<jack_port_t*> in_ports;
 std::vector<jack_port_t*> out_ports;
+
 std::vector<std::vector<float>> in_buffers;
 std::vector<std::vector<float>> out_buffers;
 
@@ -34,7 +37,7 @@ void copy_buffers(jack_nframes_t nframes) {
 
   if (t1 == t2) {
     if ((t1 != pt) && (0 != pt) && ((t1 - pt) != nframes)) {
-      std::cout << "oy - missed a buffer! (t1 - pt): " << (t1 - pt) << "\n";
+      jack_error("oy - missed a buffer! (t1 - pt): %d", (t1 - pt));
     }
     for (size_t index = 0; index < number_of_channels; ++index) {
       memcpy(&(out_buffers[index][0]), &(in_buffers[index][0]), nframes*(sizeof(float)));
@@ -46,7 +49,7 @@ void copy_buffers(jack_nframes_t nframes) {
 
 extern "C" {
   int buffer_size_callback(jack_nframes_t nframes, void *arg) {
-    std::cout << "buffer_size_callback: " << nframes << "\n";
+    jack_info("buffer_size_callback: %d", nframes);
     for (size_t index = 0; index < number_of_channels; ++index) {
       in_buffers[index].resize(nframes);
       out_buffers[index].resize(nframes);
@@ -66,7 +69,7 @@ extern "C" {
     copy_buffers(nframes);
 
     if (previous_frame_time1 != 0 && last_frame_time - previous_frame_time1 != nframes) {
-      std::cout << "ay1 - missed a buffer\n";
+      jack_error("process_input - missed a buffer");
     } 
     previous_frame_time1 = last_frame_time;
     return 0;
@@ -83,7 +86,7 @@ extern "C" {
     copy_buffers(nframes);
 
     if (previous_frame_time2 != 0 && last_frame_time - previous_frame_time2 != nframes) {
-      std::cout << "ay2 - missed a buffer\n";
+      jack_error("process_output:  - missed a buffer");
     } 
     previous_frame_time2 = last_frame_time;
     return 0;
