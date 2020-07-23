@@ -27,10 +27,10 @@ jack_nframes_t previous_frame_time2;
 size_t number_of_channels = 2;
 
 void copy_buffers(jack_nframes_t nframes) {
-  auto t1 = frame_time1.load(std::memory_order_acquire); 
-  auto t2 = frame_time2.load(std::memory_order_acquire); 
+  auto t1 = frame_time1.load(); 
+  auto t2 = frame_time2.load(); 
 
-  auto pt = previous_frame_time.load(std::memory_order_acquire);
+  auto pt = previous_frame_time.load();
 
   if (t1 == t2) {
     if ((t1 != pt) && (0 != pt) && ((t1 - pt) != nframes)) {
@@ -40,7 +40,7 @@ void copy_buffers(jack_nframes_t nframes) {
       memcpy(&(out_buffers[index][0]), &(in_buffers[index][0]), nframes*(sizeof(float)));
     }
 
-    previous_frame_time.store(t1, std::memory_order_release);
+    previous_frame_time.store(t1);
   }
 }
 
@@ -61,7 +61,7 @@ extern "C" {
     }
 
     jack_nframes_t last_frame_time = jack_last_frame_time(jack_input_client);
-    frame_time1.store(last_frame_time, std::memory_order_release);
+    frame_time1.store(last_frame_time);
 
     copy_buffers(nframes);
 
@@ -78,7 +78,7 @@ extern "C" {
     }
 
     jack_nframes_t last_frame_time = jack_last_frame_time(jack_input_client);
-    frame_time2.store(last_frame_time, std::memory_order_release);
+    frame_time2.store(last_frame_time);
 
     copy_buffers(nframes);
 
