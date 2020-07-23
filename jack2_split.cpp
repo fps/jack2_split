@@ -37,7 +37,7 @@ void copy_buffers(jack_nframes_t nframes) {
       memcpy(&(out_buffers[index][0]), &(in_buffers[index][0]), nframes*(sizeof(float)));
     }
 
-    previous_frame_time.store(t1);
+    previous_frame_time.store(t1, std::memory_order_release);
   }
 }
 
