@@ -19,11 +19,25 @@ std::vector<std::vector<float>> out_buffers;
 std::atomic<jack_nframes_t> frame_time1;
 std::atomic<jack_nframes_t> frame_time2;
 
+std::atomic<jack_nframes_t> previous_frame_time;
+
 size_t number_of_channels = 2;
 
 void copy_buffers(jack_nframes_t nframes) {
-  for (size_t index = 0; index < number_of_channels; ++index) {
-    memcpy(&(out_buffers[index][0]), &(in_buffers[index][0]), nframes*(sizeof(float)));
+  auto t1 = frame_time1.load(std::memory_order_acquire); 
+  auto t2 = frame_time2.load(std::memory_order_acquire); 
+
+  auto pt = previous_frame_time.load(std::memory_order_acquire);
+
+  if (t1 == t2) {
+    if ((t1 - pt) != nframes) {
+      std::cout << "oy - missed a buffer!\n";
+    }
+    for (size_t index = 0; index < number_of_channels; ++index) {
+      memcpy(&(out_buffers[index][0]), &(in_buffers[index][0]), nframes*(sizeof(float)));
+    }
+
+    previous_frame_time.store(t1);
   }
 }
 
@@ -44,12 +58,9 @@ extern "C" {
     }
 
     jack_nframes_t last_frame_time = jack_last_frame_time(jack_input_client);
-    frame_time1 = last_frame_time;
+    frame_time1.store(last_frame_time, std::memory_order_release);
 
-    if (frame_time1 == frame_time2) {
-      // std::cout << "in: " << last_frame_time << "\n";
-      copy_buffers(nframes);
-    }
+    copy_buffers(nframes);
 
     return 0;
   }
@@ -60,12 +71,9 @@ extern "C" {
     }
 
     jack_nframes_t last_frame_time = jack_last_frame_time(jack_input_client);
-    frame_time2 = last_frame_time;
+    frame_time2.store(last_frame_time, std::memory_order_release);
 
-    if (frame_time1 == frame_time2) {
-      // std::cout << "out: " << last_frame_time << "\n";
-      copy_buffers(nframes);
-    }
+    copy_buffers(nframes);
 
     return 0;
   }
