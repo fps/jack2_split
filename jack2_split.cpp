@@ -23,42 +23,11 @@ bool input_to_first_buffer = true;
 
 timestamped_double_buffers buffers;
 
-#if 0
-// TODO: check semantics of std::atomic to see if it really gives us what we need here...
-std::atomic<jack_nframes_t> frame_time1;
-std::atomic<jack_nframes_t> frame_time2;
-
-std::atomic<jack_nframes_t> previous_frame_time;
-
-jack_nframes_t previous_frame_time1;
-jack_nframes_t previous_frame_time2;
-#endif
-
 size_t number_of_channels = 2;
-
-# if 0
-void copy_buffers(jack_nframes_t nframes) {
-  auto t1 = frame_time1.load(); 
-  auto t2 = frame_time2.load(); 
-
-  auto pt = previous_frame_time.load();
-
-  if (t1 == t2) {
-    if ((t1 != pt) && (0 != pt) && ((t1 - pt) != nframes)) {
-      jack_error("oy - missed a buffer! (t1 - pt): %d", (t1 - pt));
-    }
-    for (size_t index = 0; index < number_of_channels; ++index) {
-      memcpy(&(out_buffers[index][0]), &(buffers[index][0]), nframes*(sizeof(float)));
-    }
-
-    previous_frame_time.store(t1);
-  }
-}
-#endif
 
 extern "C" {
   int buffer_size_callback(jack_nframes_t nframes, void *arg) {
-    jack_info("buffer_size_callback: %d", nframes);
+    // jack_info("buffer_size_callback: %d", nframes);
     for (size_t index = 0; index < number_of_channels; ++index) {
       buffers.first.second[index].resize(nframes);
       buffers.first.first = 0;
@@ -91,6 +60,12 @@ extern "C" {
     const size_t buffer_size = buffers.first.second[0].size();
     const bool use_first_buffer = (buffers.first.first == last_frame_time - buffer_size);
     const bool use_second_buffer = (buffers.second.first == last_frame_time - buffer_size);
+
+    // jack_info("buffer %d %d", (int)use_first_buffer, (int)use_second_buffer);
+    if (!use_first_buffer && !use_second_buffer) {
+      jack_info("No buffer available");
+    }
+
     for (size_t index = 0; index < number_of_channels; ++index) {
       if (use_first_buffer) {
         memcpy(jack_port_get_buffer(out_ports[index], nframes), &(buffers.first.second[index][0]), nframes*(sizeof(float)));
@@ -111,8 +86,8 @@ extern "C" {
 int main(int argc, char *argv[]) {
   jack_status_t jack_status;
 
-  jack_input_client = jack_client_open("jack2_split_in", JackNullOption, &jack_status);
   jack_output_client = jack_client_open("jack2_split_out", JackNullOption, &jack_status);
+  jack_input_client = jack_client_open("jack2_split_in", JackNullOption, &jack_status);
 
   // TODO: error checking and reporting
   if (!(jack_input_client && jack_output_client)) {
@@ -142,8 +117,11 @@ int main(int argc, char *argv[]) {
 
   jack_set_buffer_size_callback(jack_input_client, buffer_size_callback, 0);
 
-  jack_activate(jack_input_client);
+  std::cout << "   Activating output client..." << std::endl << std::flush;
   jack_activate(jack_output_client);
+  std::cout << "...Activating input client..." << std::endl << std::flush;
+  jack_activate(jack_input_client);
+  std::cout << "...Done." << std::endl << std::flush;
  
   // TODO: signal handling and clean exit
   while(true) {
